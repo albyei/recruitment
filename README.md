@@ -1,5 +1,6 @@
 # Recruitment-Portal
 Centralized recruitment portal for Wowrack.
+
 This repository contains backend, frontend, and DevOps configurations in a single monorepo.
 
 ## Repository Structure
