@@ -13,6 +13,7 @@ recruitment-portal/
 │   └── docker-compose.yml
 ├── docs/
 └── README.md
+```
 
 ## Branching Strategy
 ### main
