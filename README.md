@@ -12,7 +12,7 @@ recruitment-portal/
 │   └── docker-compose.yml 
 ├── docs/ # Project documentation 
 └── README.md
-
+...
 ## Branching Strategy
 ### main
 Stable branch intended for production deployment
