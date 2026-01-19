@@ -5,15 +5,14 @@ This repository contains backend, frontend, and DevOps configurations in a singl
 ## Repository Structure
 
 ```text
-recruitment-portal/ 
-├── backend/ # Golang backend service 
-├── frontend/ # React frontend application 
-├── devops/ # CI/CD and deployment configuration 
-│   ├── Jenkinsfile 
-│   └── docker-compose.yml 
-├── docs/ # Project documentation 
+recruitment-portal/
+├── backend/
+├── frontend/
+├── devops/
+│   ├── Jenkinsfile
+│   └── docker-compose.yml
+├── docs/
 └── README.md
-...
 
 ## Branching Strategy
 ### main
