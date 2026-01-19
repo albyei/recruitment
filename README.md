@@ -34,6 +34,7 @@ All features branches should be merged into develop first and promoted to main v
 - CI/CD is handled using **Jenkins**
 - Pipeline triggers on push to _develop_ and _main_
 - Appication is built and deployed using **Docker** and **Docker Compose**
+
 Detailed deployment steps are in _docs/deployment.md_
 
 ## Roles
