@@ -13,6 +13,7 @@ recruitment-portal/
 ├── docs/ # Project documentation 
 └── README.md
 ...
+
 ## Branching Strategy
 ### main
 Stable branch intended for production deployment
