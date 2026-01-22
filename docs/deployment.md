@@ -6,15 +6,19 @@
 - Orchestration: Docker Compose
 - CI/CD: Jenkins
 - Server:
-  - server 1:
-  - server 2: 
-  - server 3:
+  - server 1: Primary development / production
+  - server 2: Backup / stanby / QA
+  - server 3: Development / testing
 
 ## Prerequesites
 - Docker installed
 - Docker Compose installed
 - Git installed
 - Access via Bastion Host
+
+## CI/CD
+- Jenkins is installed on server 1
+- Jenkins deploys application to target server via SSH
 
 ## Deployment Flow (High Level)
 1. Developer pushes code to Github (develop/main)
@@ -29,3 +33,4 @@
 
 ## Notes 
 Actual service ports, environment variables, and image names will be finalized once backend and frontend code are available.
+
