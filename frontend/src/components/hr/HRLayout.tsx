@@ -7,6 +7,7 @@ import {
   Kanban, 
   Calendar, 
   BarChart3,
+  Briefcase,
   Menu,
   X,
   LogOut,
@@ -20,6 +21,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { path: '/hr', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/hr/requisitions', label: 'Requisitions', icon: FileText, badge: 3 },
+  { path: '/hr/job-openings', label: 'Job Openings', icon: Briefcase },
   { path: '/hr/candidates', label: 'Candidates', icon: Users },
   { path: '/hr/pipeline', label: 'Pipeline', icon: Kanban },
   { path: '/hr/interviews', label: 'Interviews', icon: Calendar },

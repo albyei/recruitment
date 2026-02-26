@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Search, 
-  Filter, 
   User, 
   Mail, 
   Phone, 
@@ -10,9 +10,12 @@ import {
   Star,
   Clock,
   ChevronRight,
-  X
+  MapPin,
+  GraduationCap,
+  Briefcase,
+  MessageCircle
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -33,15 +36,33 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { mockCandidates, Candidate, pipelineStages } from '@/lib/mockHRData';
+import { Separator } from '@/components/ui/separator';
+import { mockCandidates, Candidate } from '@/lib/mockHRData';
+import { usePipelineStages } from '@/lib/pipelineStageStore';
 
 export default function HRCandidates() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const pipelineStages = usePipelineStages();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [filterStage, setFilterStage] = useState<string>('all');
   const [minAiScore, setMinAiScore] = useState<number>(0);
   const [minExperience, setMinExperience] = useState<number>(0);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+
+  // Auto-open candidate detail from URL param
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (openId) {
+      const candidate = mockCandidates.find(c => c.id === openId);
+      if (candidate) {
+        setSelectedCandidate(candidate);
+      }
+      searchParams.delete('open');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const departments = [...new Set(mockCandidates.map(c => c.department))];
 
@@ -73,7 +94,6 @@ export default function HRCandidates() {
       <Card>
         <CardContent className="p-6">
           <div className="space-y-4">
-            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -84,7 +104,6 @@ export default function HRCandidates() {
               />
             </div>
 
-            {/* Filter Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Select value={filterDepartment} onValueChange={setFilterDepartment}>
                 <SelectTrigger>
@@ -269,6 +288,10 @@ export default function HRCandidates() {
                       <Phone className="h-4 w-4 text-muted-foreground" />
                       <span>{selectedCandidate.phone}</span>
                     </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                      <span>WhatsApp: {selectedCandidate.whatsapp}</span>
+                    </div>
                     {selectedCandidate.linkedIn && (
                       <div className="flex items-center gap-2 text-sm">
                         <Linkedin className="h-4 w-4 text-muted-foreground" />
@@ -279,6 +302,19 @@ export default function HRCandidates() {
                     )}
                   </div>
                 </div>
+
+                <Separator />
+
+                {/* Domicile */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold">Domicile</h4>
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{selectedCandidate.city}, {selectedCandidate.province}</span>
+                  </div>
+                </div>
+
+                <Separator />
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4">
@@ -298,6 +334,44 @@ export default function HRCandidates() {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Education */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4" />
+                    Education
+                  </h4>
+                  {selectedCandidate.educationType === 'university' ? (
+                    <div className="text-sm space-y-1">
+                      <p className="font-medium">{selectedCandidate.universityName}</p>
+                      <p className="text-muted-foreground">Level: {selectedCandidate.universityLevel}</p>
+                    </div>
+                  ) : (
+                    <div className="text-sm">
+                      <p className="font-medium">{selectedCandidate.highSchoolName}</p>
+                      <p className="text-muted-foreground">SMA/SMK</p>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Last Work Experience */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" />
+                    Last Work Experience
+                  </h4>
+                  <div className="text-sm space-y-1">
+                    <p className="font-medium">{selectedCandidate.lastRole}</p>
+                    <p className="text-muted-foreground">{selectedCandidate.lastCompany}</p>
+                    <p className="text-muted-foreground">
+                      {selectedCandidate.lastWorkFrom} — {selectedCandidate.lastWorkTo}
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
 
                 {/* Skills */}
                 <div className="space-y-3">
@@ -349,8 +423,19 @@ export default function HRCandidates() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-4 border-t">
-                  <Button className="flex-1">Move to Next Stage</Button>
-                  <Button variant="outline">Schedule Interview</Button>
+                  <Button
+                    className="flex-1"
+                    variant="outline"
+                    onClick={() => navigate(`/hr/pipeline?job=${encodeURIComponent(selectedCandidate.position)}&candidate=${selectedCandidate.id}`)}
+                  >
+                    View in Pipeline
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={() => navigate(`/hr/interviews?candidate=${selectedCandidate.id}`)}
+                  >
+                    Schedule Interview
+                  </Button>
                 </div>
               </div>
             </>

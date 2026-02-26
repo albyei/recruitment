@@ -4,7 +4,6 @@ import {
   Plus, 
   Edit, 
   Trash2,
-  Filter,
   MoreVertical,
   UserCheck,
   UserX
@@ -14,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -54,7 +54,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { mockUserAccounts, UserAccount, UserRole, departments } from '@/lib/mockAdminData';
+import { mockUserAccounts, UserAccount, UserRole } from '@/lib/mockAdminData';
+import { useDepartments } from '@/lib/departmentStore';
+
+const ALL_ROLES: { value: UserRole; label: string }[] = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'hr', label: 'HR' },
+  { value: 'hiring-manager', label: 'Hiring Manager' },
+];
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<UserAccount[]>(mockUserAccounts);
@@ -68,16 +75,17 @@ export default function AdminUsers() {
     name: '',
     email: '',
     password: '',
-    role: 'hr' as UserRole,
+    roles: [] as UserRole[],
     department: '',
     status: 'active' as 'active' | 'inactive'
   });
   const { toast } = useToast();
+  const { departments } = useDepartments();
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
+    const matchesRole = filterRole === 'all' || user.roles.includes(filterRole as UserRole);
     const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -88,7 +96,7 @@ export default function AdminUsers() {
       name: '',
       email: '',
       password: '',
-      role: 'hr',
+      roles: [],
       department: '',
       status: 'active'
     });
@@ -101,21 +109,40 @@ export default function AdminUsers() {
       name: user.name,
       email: user.email,
       password: '',
-      role: user.role,
+      roles: [...user.roles],
       department: user.department,
       status: user.status
     });
     setShowUserDialog(true);
   };
 
-  const shouldShowDepartment = formData.role === 'hiring-manager';
+  const shouldShowDepartment = formData.roles.includes('hiring-manager');
+
+  const toggleRole = (role: UserRole) => {
+    setFormData(prev => {
+      const newRoles = prev.roles.includes(role)
+        ? prev.roles.filter(r => r !== role)
+        : [...prev.roles, role];
+      // Clear department if hiring-manager is removed
+      const department = newRoles.includes('hiring-manager') ? prev.department : '';
+      return { ...prev, roles: newRoles, department };
+    });
+  };
 
   const handleSaveUser = () => {
-    const needsDepartment = formData.role === 'hiring-manager';
-    if (!formData.name || !formData.email || (needsDepartment && !formData.department)) {
+    if (!formData.name || !formData.email || formData.roles.length === 0) {
       toast({
         title: 'Validation Error',
-        description: 'Please fill in all required fields.',
+        description: 'Please fill in all required fields and select at least one role.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (formData.roles.includes('hiring-manager') && !formData.department) {
+      toast({
+        title: 'Validation Error',
+        description: 'Department is required for Hiring Manager role.',
         variant: 'destructive'
       });
       return;
@@ -133,7 +160,7 @@ export default function AdminUsers() {
     if (editingUser) {
       setUsers(prev => prev.map(u => 
         u.id === editingUser.id 
-          ? { ...u, ...formData }
+          ? { ...u, name: formData.name, email: formData.email, roles: formData.roles, department: formData.department, status: formData.status }
           : u
       ));
       toast({
@@ -143,7 +170,11 @@ export default function AdminUsers() {
     } else {
       const newUser: UserAccount = {
         id: `user-${Date.now()}`,
-        ...formData,
+        name: formData.name,
+        email: formData.email,
+        roles: formData.roles,
+        department: formData.department,
+        status: formData.status,
         createdAt: new Date().toISOString().split('T')[0],
         lastLogin: '-'
       };
@@ -182,11 +213,11 @@ export default function AdminUsers() {
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
       case 'admin':
-        return <Badge className="bg-purple-500">Admin</Badge>;
+        return <Badge key={role} className="bg-purple-500">Admin</Badge>;
       case 'hr':
-        return <Badge className="bg-blue-500">HR</Badge>;
+        return <Badge key={role} className="bg-blue-500">HR</Badge>;
       case 'hiring-manager':
-        return <Badge className="bg-green-500">Hiring Manager</Badge>;
+        return <Badge key={role} className="bg-green-500">Hiring Manager</Badge>;
     }
   };
 
@@ -250,7 +281,7 @@ export default function AdminUsers() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead>Roles</TableHead>
                 <TableHead>Department</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Last Login</TableHead>
@@ -262,8 +293,12 @@ export default function AdminUsers() {
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{getRoleBadge(user.role)}</TableCell>
-                  <TableCell>{user.department}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {user.roles.map(role => getRoleBadge(role))}
+                    </div>
+                  </TableCell>
+                  <TableCell>{user.department || '-'}</TableCell>
                   <TableCell>
                     <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
                       {user.status}
@@ -362,39 +397,35 @@ export default function AdminUsers() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Role *</Label>
-                <Select 
-                  value={formData.role} 
-                  onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value, department: '' }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="hr">HR</SelectItem>
-                    <SelectItem value="hiring-manager">Hiring Manager</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="space-y-2">
+              <Label>Roles *</Label>
+              <div className="flex flex-col gap-3 rounded-md border p-3">
+                {ALL_ROLES.map(({ value, label }) => (
+                  <label key={value} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={formData.roles.includes(value)}
+                      onCheckedChange={() => toggleRole(value)}
+                    />
+                    <span className="text-sm">{label}</span>
+                  </label>
+                ))}
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value: 'active' | 'inactive') => setFormData(prev => ({ ...prev, status: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select 
+                value={formData.status} 
+                onValueChange={(value: 'active' | 'inactive') => setFormData(prev => ({ ...prev, status: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {shouldShowDepartment && (

@@ -1,24 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Send } from "lucide-react";
+import BenefitsSelector from "@/components/hiring-manager/BenefitsSelector";
 
 interface MPPFormData {
   title: string;
   aboutRole: string;
   responsibilities: string;
   requirements: string;
-  benefits: string;
+  benefits: string[];
   salaryMin: number;
   salaryMax: number;
   quantity: number;
   priority: 'high' | 'medium' | 'low';
   justification: string;
+  dateNeeded: string;
+  reportTo: string;
+  budgeted: 'budgeted' | 'not_budgeted';
+  recruitmentStatus: 'new' | 'replacement' | 'expansion';
+  specialNeeds: string;
+  provinceId: string;
+  provinceName: string;
+  regencyId: string;
+  regencyName: string;
 }
 
 const initialFormData: MPPFormData = {
@@ -26,18 +37,47 @@ const initialFormData: MPPFormData = {
   aboutRole: '',
   responsibilities: '',
   requirements: '',
-  benefits: '',
+  benefits: [],
   salaryMin: 0,
   salaryMax: 0,
   quantity: 1,
   priority: 'medium',
   justification: '',
+  dateNeeded: '',
+  reportTo: '',
+  budgeted: 'budgeted',
+  recruitmentStatus: 'new',
+  specialNeeds: '',
+  provinceId: '',
+  provinceName: '',
+  regencyId: '',
+  regencyName: '',
 };
 
 export default function HiringManagerMPP() {
   const [formData, setFormData] = useState<MPPFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [provinces, setProvinces] = useState<{ id: string; name: string }[]>([]);
+  const [regencies, setRegencies] = useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetch("https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json")
+      .then((res) => res.json())
+      .then((data) => setProvinces(data))
+      .catch(() => toast({ title: "Error", description: "Failed to load provinces", variant: "destructive" }));
+  }, []);
+
+  useEffect(() => {
+    if (formData.provinceId) {
+      setRegencies([]);
+      setFormData((prev) => ({ ...prev, regencyId: '', regencyName: '' }));
+      fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${formData.provinceId}.json`)
+        .then((res) => res.json())
+        .then((data) => setRegencies(data))
+        .catch(() => toast({ title: "Error", description: "Failed to load cities", variant: "destructive" }));
+    }
+  }, [formData.provinceId]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -62,7 +102,8 @@ export default function HiringManagerMPP() {
     e.preventDefault();
     
     if (!formData.title || !formData.aboutRole || !formData.responsibilities || 
-        !formData.requirements || !formData.benefits || !formData.justification) {
+        !formData.requirements || formData.benefits.length === 0 || !formData.justification ||
+        !formData.dateNeeded || !formData.reportTo || !formData.provinceId || !formData.regencyId) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields.",
@@ -123,9 +164,123 @@ export default function HiringManagerMPP() {
                   onChange={handleInputChange}
                   placeholder="e.g., Senior Software Engineer"
                 />
+            </div>
+
+              <div className="space-y-2">
+                <Label>Province *</Label>
+                <Select
+                  value={formData.provinceId}
+                  onValueChange={(value) => {
+                    const prov = provinces.find((p) => p.id === value);
+                    setFormData((prev) => ({ ...prev, provinceId: value, provinceName: prov?.name || '' }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select province" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {provinces.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
+                <Label>City / Regency *</Label>
+                <Select
+                  value={formData.regencyId}
+                  onValueChange={(value) => {
+                    const reg = regencies.find((r) => r.id === value);
+                    setFormData((prev) => ({ ...prev, regencyId: value, regencyName: reg?.name || '' }));
+                  }}
+                  disabled={!formData.provinceId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={formData.provinceId ? "Select city" : "Select province first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {regencies.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="dateNeeded">Date Needed *</Label>
+                <Input
+                  id="dateNeeded"
+                  name="dateNeeded"
+                  type="date"
+                  value={formData.dateNeeded}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reportTo">Report To *</Label>
+                <Input
+                  id="reportTo"
+                  name="reportTo"
+                  value={formData.reportTo}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Engineering Manager"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>Budget Status *</Label>
+                <RadioGroup
+                  value={formData.budgeted}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, budgeted: value as 'budgeted' | 'not_budgeted' }))}
+                  className="flex gap-4 pt-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="budgeted" id="budgeted" />
+                    <Label htmlFor="budgeted" className="font-normal">Budgeted</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="not_budgeted" id="not_budgeted" />
+                    <Label htmlFor="not_budgeted" className="font-normal">Not Budgeted</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Recruitment Status *</Label>
+                <Select
+                  value={formData.recruitmentStatus}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, recruitmentStatus: value as 'new' | 'replacement' | 'expansion' }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">New Position</SelectItem>
+                    <SelectItem value="replacement">Replacement</SelectItem>
+                    <SelectItem value="expansion">Expansion</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="specialNeeds">Special Needs</Label>
+              <Textarea
+                id="specialNeeds"
+                name="specialNeeds"
+                value={formData.specialNeeds}
+                onChange={handleInputChange}
+                placeholder="Any special requirements, certifications, tools, or accommodations needed..."
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
                 <Label htmlFor="quantity">Quantity *</Label>
                 <Input
                   id="quantity"
@@ -174,17 +329,10 @@ export default function HiringManagerMPP() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="benefits">Benefits *</Label>
-              <Textarea
-                id="benefits"
-                name="benefits"
-                value={formData.benefits}
-                onChange={handleInputChange}
-                placeholder="List the benefits offered for this position..."
-                rows={3}
-              />
-            </div>
+            <BenefitsSelector
+              selectedBenefits={formData.benefits}
+              onBenefitsChange={(benefits) => setFormData((prev) => ({ ...prev, benefits }))}
+            />
 
             <div className="grid md:grid-cols-3 gap-6">
               <div className="space-y-2">

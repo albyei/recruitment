@@ -16,6 +16,12 @@ export interface MPPRequest {
   status: 'pending' | 'approved' | 'rejected' | 'revision';
   submittedDate: string;
   hrFeedback?: string;
+  dateNeeded: string;
+  reportTo: string;
+  budgeted: 'budgeted' | 'not_budgeted';
+  recruitmentStatus: 'new' | 'replacement' | 'expansion';
+  specialNeeds?: string;
+  location: string;
 }
 
 export interface Candidate {
@@ -23,6 +29,7 @@ export interface Candidate {
   name: string;
   email: string;
   phone: string;
+  whatsapp: string;
   position: string;
   department: string;
   aiScore: number;
@@ -34,6 +41,19 @@ export interface Candidate {
   resumeUrl: string;
   linkedIn?: string;
   timeline: TimelineEvent[];
+  // Domicile
+  province: string;
+  city: string;
+  // Education
+  educationType: 'highschool' | 'university';
+  highSchoolName?: string;
+  universityName?: string;
+  universityLevel?: string;
+  // Last work experience
+  lastRole: string;
+  lastCompany: string;
+  lastWorkFrom: string;
+  lastWorkTo: string;
 }
 
 export interface TimelineEvent {
@@ -44,15 +64,7 @@ export interface TimelineEvent {
   user?: string;
 }
 
-export type PipelineStage = 
-  | 'applied' 
-  | 'selected' 
-  | 'contacted' 
-  | 'hr-interview' 
-  | 'user-interview' 
-  | 'salary-negotiation' 
-  | 'hired' 
-  | 'rejected';
+export type PipelineStage = string;
 
 export interface Interview {
   id: string;
@@ -63,7 +75,7 @@ export interface Interview {
   scheduledTime: string;
   duration: number;
   interviewers: string[];
-  type: 'hr' | 'technical' | 'final';
+  type: 'hr' | 'user' | 'director';
   status: 'scheduled' | 'completed' | 'cancelled';
   meetingLink?: string;
   aiScore?: number;
@@ -106,6 +118,12 @@ export const mockMPPRequests: MPPRequest[] = [
     priority: 'high',
     status: 'pending',
     submittedDate: '2025-01-10',
+    dateNeeded: '2025-03-01',
+    reportTo: 'VP of Engineering',
+    budgeted: 'budgeted',
+    recruitmentStatus: 'expansion',
+    specialNeeds: 'Must be comfortable with on-call rotation',
+    location: 'Jakarta Selatan',
   },
   {
     id: 'mpp-2',
@@ -124,6 +142,11 @@ export const mockMPPRequests: MPPRequest[] = [
     priority: 'medium',
     status: 'pending',
     submittedDate: '2025-01-08',
+    dateNeeded: '2025-02-15',
+    reportTo: 'Marketing Director',
+    budgeted: 'budgeted',
+    recruitmentStatus: 'replacement',
+    location: 'Bandung',
   },
   {
     id: 'mpp-3',
@@ -142,6 +165,12 @@ export const mockMPPRequests: MPPRequest[] = [
     priority: 'urgent',
     status: 'pending',
     submittedDate: '2025-01-05',
+    dateNeeded: '2025-02-01',
+    reportTo: 'Head of Analytics',
+    budgeted: 'not_budgeted',
+    recruitmentStatus: 'new',
+    specialNeeds: 'Experience with healthcare data preferred',
+    location: 'Surabaya',
   },
   {
     id: 'mpp-4',
@@ -160,6 +189,11 @@ export const mockMPPRequests: MPPRequest[] = [
     priority: 'low',
     status: 'approved',
     submittedDate: '2025-01-02',
+    dateNeeded: '2025-03-15',
+    reportTo: 'Head of Design',
+    budgeted: 'budgeted',
+    recruitmentStatus: 'expansion',
+    location: 'Remote',
   },
 ];
 
@@ -169,6 +203,7 @@ export const mockCandidates: Candidate[] = [
     name: 'Ratna Sari Dewi',
     email: 'ratna.sari@email.com',
     phone: '+62 812-1111-2222',
+    whatsapp: '6281211112222',
     position: 'Senior Software Engineer',
     department: 'Engineering',
     aiScore: 92,
@@ -179,6 +214,15 @@ export const mockCandidates: Candidate[] = [
     source: 'LinkedIn',
     resumeUrl: '/resumes/ratna-sari.pdf',
     linkedIn: 'https://linkedin.com/in/ratnasari',
+    province: 'DKI Jakarta',
+    city: 'Jakarta Selatan',
+    educationType: 'university',
+    universityName: 'Universitas Indonesia',
+    universityLevel: 'S1',
+    lastRole: 'Frontend Developer',
+    lastCompany: 'PT Tokopedia',
+    lastWorkFrom: '2019-03',
+    lastWorkTo: '2025-01',
     timeline: [
       { id: 't1', date: '2025-01-12', event: 'Melamar', description: 'Mengirim lamaran via LinkedIn' },
       { id: 't2', date: '2025-01-13', event: 'AI Screening', description: 'Skor AI: 92/100' },
@@ -192,6 +236,7 @@ export const mockCandidates: Candidate[] = [
     name: 'Agus Hermawan',
     email: 'agus.hermawan@email.com',
     phone: '+62 813-2222-3333',
+    whatsapp: '6281322223333',
     position: 'Senior Software Engineer',
     department: 'Engineering',
     aiScore: 88,
@@ -201,6 +246,15 @@ export const mockCandidates: Candidate[] = [
     stage: 'selected',
     source: 'Jobstreet',
     resumeUrl: '/resumes/agus-hermawan.pdf',
+    province: 'Jawa Barat',
+    city: 'Bandung',
+    educationType: 'university',
+    universityName: 'Institut Teknologi Bandung',
+    universityLevel: 'S1',
+    lastRole: 'Backend Developer',
+    lastCompany: 'PT Bukalapak',
+    lastWorkFrom: '2020-06',
+    lastWorkTo: '2025-01',
     timeline: [
       { id: 't1', date: '2025-01-11', event: 'Melamar', description: 'Mengirim lamaran via Jobstreet' },
       { id: 't2', date: '2025-01-12', event: 'AI Screening', description: 'Skor AI: 88/100' },
@@ -212,6 +266,7 @@ export const mockCandidates: Candidate[] = [
     name: 'Lina Kusuma',
     email: 'lina.kusuma@email.com',
     phone: '+62 814-3333-4444',
+    whatsapp: '6281433334444',
     position: 'Marketing Manager',
     department: 'Marketing',
     aiScore: 85,
@@ -222,6 +277,15 @@ export const mockCandidates: Candidate[] = [
     source: 'Referral',
     resumeUrl: '/resumes/lina-kusuma.pdf',
     linkedIn: 'https://linkedin.com/in/linakusuma',
+    province: 'DKI Jakarta',
+    city: 'Jakarta Pusat',
+    educationType: 'university',
+    universityName: 'Universitas Gadjah Mada',
+    universityLevel: 'S2',
+    lastRole: 'Digital Marketing Lead',
+    lastCompany: 'PT Gojek Indonesia',
+    lastWorkFrom: '2018-01',
+    lastWorkTo: '2025-01',
     timeline: [
       { id: 't1', date: '2025-01-10', event: 'Melamar', description: 'Direferensikan oleh karyawan' },
       { id: 't2', date: '2025-01-11', event: 'AI Screening', description: 'Skor AI: 85/100' },
@@ -234,6 +298,7 @@ export const mockCandidates: Candidate[] = [
     name: 'Dimas Putra',
     email: 'dimas.putra@email.com',
     phone: '+62 815-4444-5555',
+    whatsapp: '6281544445555',
     position: 'Data Analyst',
     department: 'Analytics',
     aiScore: 78,
@@ -243,6 +308,15 @@ export const mockCandidates: Candidate[] = [
     stage: 'applied',
     source: 'Website Perusahaan',
     resumeUrl: '/resumes/dimas-putra.pdf',
+    province: 'Jawa Timur',
+    city: 'Surabaya',
+    educationType: 'university',
+    universityName: 'Universitas Airlangga',
+    universityLevel: 'S1',
+    lastRole: 'Junior Data Analyst',
+    lastCompany: 'PT Telkom Indonesia',
+    lastWorkFrom: '2022-01',
+    lastWorkTo: '2025-01',
     timeline: [
       { id: 't1', date: '2025-01-09', event: 'Melamar', description: 'Mengirim via website perusahaan' },
       { id: 't2', date: '2025-01-10', event: 'AI Screening', description: 'Skor AI: 78/100' },
@@ -253,6 +327,7 @@ export const mockCandidates: Candidate[] = [
     name: 'Maya Indah',
     email: 'maya.indah@email.com',
     phone: '+62 816-5555-6666',
+    whatsapp: '6281655556666',
     position: 'UX Designer',
     department: 'Design',
     aiScore: 94,
@@ -263,6 +338,15 @@ export const mockCandidates: Candidate[] = [
     source: 'LinkedIn',
     resumeUrl: '/resumes/maya-indah.pdf',
     linkedIn: 'https://linkedin.com/in/mayaindah',
+    province: 'DI Yogyakarta',
+    city: 'Yogyakarta',
+    educationType: 'university',
+    universityName: 'Institut Seni Indonesia Yogyakarta',
+    universityLevel: 'S1',
+    lastRole: 'UI/UX Designer',
+    lastCompany: 'PT Shopee Indonesia',
+    lastWorkFrom: '2021-05',
+    lastWorkTo: '2025-01',
     timeline: [
       { id: 't1', date: '2025-01-08', event: 'Melamar', description: 'Mengirim via LinkedIn' },
       { id: 't2', date: '2025-01-09', event: 'AI Screening', description: 'Skor AI: 94/100' },
@@ -276,6 +360,7 @@ export const mockCandidates: Candidate[] = [
     name: 'Rendra Pratama',
     email: 'rendra.pratama@email.com',
     phone: '+62 817-6666-7777',
+    whatsapp: '6281766667777',
     position: 'Senior Software Engineer',
     department: 'Engineering',
     aiScore: 72,
@@ -285,6 +370,14 @@ export const mockCandidates: Candidate[] = [
     stage: 'rejected',
     source: 'Jobstreet',
     resumeUrl: '/resumes/rendra-pratama.pdf',
+    province: 'Jawa Barat',
+    city: 'Depok',
+    educationType: 'highschool',
+    highSchoolName: 'SMK Telkom Jakarta',
+    lastRole: 'Java Developer',
+    lastCompany: 'PT Bank Central Asia',
+    lastWorkFrom: '2017-03',
+    lastWorkTo: '2025-01',
     timeline: [
       { id: 't1', date: '2025-01-07', event: 'Melamar', description: 'Mengirim via Jobstreet' },
       { id: 't2', date: '2025-01-08', event: 'AI Screening', description: 'Skor AI: 72/100' },
@@ -296,6 +389,7 @@ export const mockCandidates: Candidate[] = [
     name: 'Anisa Fitri',
     email: 'anisa.fitri@email.com',
     phone: '+62 818-7777-8888',
+    whatsapp: '6281877778888',
     position: 'Data Analyst',
     department: 'Analytics',
     aiScore: 89,
@@ -306,6 +400,15 @@ export const mockCandidates: Candidate[] = [
     source: 'Referral',
     resumeUrl: '/resumes/anisa-fitri.pdf',
     linkedIn: 'https://linkedin.com/in/anisafitri',
+    province: 'DKI Jakarta',
+    city: 'Jakarta Barat',
+    educationType: 'university',
+    universityName: 'Universitas Bina Nusantara',
+    universityLevel: 'S2',
+    lastRole: 'Data Scientist',
+    lastCompany: 'PT Grab Indonesia',
+    lastWorkFrom: '2021-08',
+    lastWorkTo: '2025-01',
     timeline: [
       { id: 't1', date: '2025-01-06', event: 'Melamar', description: 'Direferensikan oleh tim analytics' },
       { id: 't2', date: '2025-01-07', event: 'AI Screening', description: 'Skor AI: 89/100' },
@@ -319,6 +422,7 @@ export const mockCandidates: Candidate[] = [
     name: 'Teguh Wijaya',
     email: 'teguh.wijaya@email.com',
     phone: '+62 819-8888-9999',
+    whatsapp: '6281988889999',
     position: 'Marketing Manager',
     department: 'Marketing',
     aiScore: 81,
@@ -328,6 +432,15 @@ export const mockCandidates: Candidate[] = [
     stage: 'contacted',
     source: 'LinkedIn',
     resumeUrl: '/resumes/teguh-wijaya.pdf',
+    province: 'Jawa Tengah',
+    city: 'Semarang',
+    educationType: 'university',
+    universityName: 'Universitas Diponegoro',
+    universityLevel: 'S1',
+    lastRole: 'Marketing Supervisor',
+    lastCompany: 'PT Unilever Indonesia',
+    lastWorkFrom: '2016-06',
+    lastWorkTo: '2025-01',
     timeline: [
       { id: 't1', date: '2025-01-05', event: 'Melamar', description: 'Mengirim via LinkedIn' },
       { id: 't2', date: '2025-01-06', event: 'AI Screening', description: 'Skor AI: 81/100' },
@@ -360,7 +473,7 @@ export const mockInterviews: Interview[] = [
     scheduledTime: '14:00',
     duration: 45,
     interviewers: ['Dewi Lestari', 'Teguh Marketing'],
-    type: 'technical',
+    type: 'user',
     status: 'scheduled',
     meetingLink: 'https://meet.google.com/klm-nopq-rst',
     aiScore: 85,
@@ -374,7 +487,7 @@ export const mockInterviews: Interview[] = [
     scheduledTime: '11:00',
     duration: 30,
     interviewers: ['Putri Maharani'],
-    type: 'final',
+    type: 'director',
     status: 'completed',
     aiScore: 94,
   },

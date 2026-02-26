@@ -40,6 +40,7 @@ export interface MPPRequest {
   status: 'pending' | 'approved' | 'rejected' | 'revision_requested';
   submittedAt: string;
   feedback?: string;
+  location: string;
 }
 
 export interface HeadcountData {
@@ -174,6 +175,7 @@ export const mockMPPRequests: MPPRequest[] = [
     status: 'rejected',
     submittedAt: '2025-01-10',
     feedback: 'Budget constraints. Please revise salary range or reduce quantity.',
+    location: 'Jakarta Selatan',
   },
   {
     id: 'MPP002',
@@ -191,6 +193,7 @@ export const mockMPPRequests: MPPRequest[] = [
     status: 'revision_requested',
     submittedAt: '2025-01-15',
     feedback: 'Please provide more details about project timeline and workload distribution.',
+    location: 'Jakarta Pusat',
   },
   {
     id: 'MPP003',
@@ -207,6 +210,7 @@ export const mockMPPRequests: MPPRequest[] = [
     priority: 'high',
     status: 'approved',
     submittedAt: '2025-01-20',
+    location: 'Remote',
   },
 ];
 

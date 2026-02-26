@@ -3,37 +3,31 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import logoWowrack from "@/assets/wowrack-logo.png";
-
-type UserRole = "hr" | "manager" | "admin";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (role: UserRole) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const success = await login(email, password);
     setIsLoading(false);
 
-    toast.success("Login successful!");
-    
-    switch (role) {
-      case "hr":
-        navigate("/hr");
-        break;
-      case "manager":
-        navigate("/manager");
-        break;
-      case "admin":
-        navigate("/admin");
-        break;
+    if (success) {
+      toast.success("Login successful!");
+      // Navigate to the first available portal dashboard
+      navigate("/dashboard");
+    } else {
+      toast.error("Invalid credentials. Try: siti@wowrack.com, budi@wowrack.com, rizky@wowrack.com, dewi@wowrack.com, or ahmad@wowrack.com");
     }
   };
 
@@ -66,121 +60,44 @@ export default function Login() {
           <h1 className="text-2xl font-bold mb-2">Wowrack Recruitment Portal</h1>
           <p className="text-muted-foreground mb-8">Sign in to access the recruitment management system</p>
 
-          <Tabs defaultValue="hr" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="hr">HR</TabsTrigger>
-              <TabsTrigger value="manager">Hiring Manager</TabsTrigger>
-              <TabsTrigger value="admin">Admin</TabsTrigger>
-            </TabsList>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@wowrack.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Signing in..." : "Sign In"}
+            </Button>
+          </form>
 
-            <TabsContent value="hr">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleLogin("hr");
-                }}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="email-hr">HR Email</Label>
-                  <Input
-                    id="email-hr"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="hr@company.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password-hr">Password</Label>
-                  <Input
-                    id="password-hr"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Signing in..." : "Sign in as HR"}
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="manager">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleLogin("manager");
-                }}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="email-manager">Work Email</Label>
-                  <Input
-                    id="email-manager"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@company.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password-manager">Password</Label>
-                  <Input
-                    id="password-manager"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Signing in..." : "Sign in as Manager"}
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="admin">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleLogin("admin");
-                }}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="email-admin">Admin Email</Label>
-                  <Input
-                    id="email-admin"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@company.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password-admin">Password</Label>
-                  <Input
-                    id="password-admin"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Signing in..." : "Sign in as Admin"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Demo accounts:</p>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p><span className="font-medium">HR:</span> siti@wowrack.com</p>
+              <p><span className="font-medium">Manager:</span> budi@wowrack.com</p>
+              <p><span className="font-medium">Admin:</span> rizky@wowrack.com</p>
+              <p><span className="font-medium">HR + Admin:</span> dewi@wowrack.com</p>
+              <p><span className="font-medium">Manager + HR:</span> ahmad@wowrack.com</p>
+            </div>
+          </div>
 
           <div className="mt-8 text-center">
             <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-secondary">

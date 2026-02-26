@@ -1,5 +1,8 @@
 import { useState, useMemo } from 'react';
 import { mockCandidateApplications } from '@/lib/mockCandidateData';
+import { useSurveys } from '@/lib/surveyStore';
+import SurveyDialog from '@/components/candidate/SurveyDialog';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -9,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,9 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Video, Search, ArrowUpDown } from 'lucide-react';
+import { Video, Search, ArrowUpDown, ClipboardList, CheckCircle } from 'lucide-react';
 
-type SortField = 'position' | 'appliedDate' | 'aiScore' | 'currentStage';
+type SortField = 'position' | 'appliedDate' | 'currentStage';
 type SortOrder = 'asc' | 'desc';
 
 export default function CandidateApplications() {
@@ -29,6 +31,11 @@ export default function CandidateApplications() {
   const [stageFilter, setStageFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('appliedDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [surveyApp, setSurveyApp] = useState<{ id: string; position: string; department: string; stage: 'Hired' | 'Rejected' } | null>(null);
+  const { addSurvey, hasSubmittedSurvey } = useSurveys();
+  const { toast } = useToast();
+
+  const isSurveyStage = (stage: string) => stage === 'Hired' || stage === 'Rejected';
 
   const getStageColor = (stage: string) => {
     switch (stage) {
@@ -43,12 +50,6 @@ export default function CandidateApplications() {
       default:
         return 'bg-amber-500/10 text-amber-600';
     }
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-amber-600';
-    return 'text-destructive';
   };
 
   const isInterviewStage = (stage: string) => {
@@ -96,9 +97,6 @@ export default function CandidateApplications() {
           break;
         case 'appliedDate':
           comparison = new Date(a.appliedDate).getTime() - new Date(b.appliedDate).getTime();
-          break;
-        case 'aiScore':
-          comparison = a.aiScore - b.aiScore;
           break;
         case 'currentStage':
           comparison = a.currentStage.localeCompare(b.currentStage);
@@ -154,8 +152,6 @@ export default function CandidateApplications() {
           <SelectContent>
             <SelectItem value="appliedDate-desc">Latest Applied</SelectItem>
             <SelectItem value="appliedDate-asc">Oldest Applied</SelectItem>
-            <SelectItem value="aiScore-desc">Highest Score</SelectItem>
-            <SelectItem value="aiScore-asc">Lowest Score</SelectItem>
             <SelectItem value="position-asc">Position A-Z</SelectItem>
             <SelectItem value="position-desc">Position Z-A</SelectItem>
           </SelectContent>
@@ -198,17 +194,6 @@ export default function CandidateApplications() {
                       variant="ghost"
                       size="sm"
                       className="-ml-3 h-8"
-                      onClick={() => toggleSort('aiScore')}
-                    >
-                      AI Score
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="-ml-3 h-8"
                       onClick={() => toggleSort('currentStage')}
                     >
                       Current Stage
@@ -236,14 +221,6 @@ export default function CandidateApplications() {
                       })}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Progress value={app.aiScore} className="w-16 h-2" />
-                        <span className={`text-sm font-medium ${getScoreColor(app.aiScore)}`}>
-                          {app.aiScore}%
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       <span
                         className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getStageColor(
                           app.currentStage
@@ -266,12 +243,29 @@ export default function CandidateApplications() {
                           Join
                         </Button>
                       )}
+                      {isSurveyStage(app.currentStage) && (
+                        hasSubmittedSurvey(app.id) ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <CheckCircle className="h-3.5 w-3.5" /> Submitted
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSurveyApp({ id: app.id, position: app.position, department: app.department, stage: app.currentStage as 'Hired' | 'Rejected' })}
+                            className="gap-2"
+                          >
+                            <ClipboardList className="h-4 w-4" />
+                            Survey
+                          </Button>
+                        )
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
                 {filteredAndSortedApplications.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No applications found matching your criteria.
                     </TableCell>
                   </TableRow>
@@ -281,6 +275,21 @@ export default function CandidateApplications() {
           </div>
         </CardContent>
       </Card>
+
+      {surveyApp && (
+        <SurveyDialog
+          open={!!surveyApp}
+          onOpenChange={(open) => !open && setSurveyApp(null)}
+          applicationId={surveyApp.id}
+          position={surveyApp.position}
+          department={surveyApp.department}
+          stage={surveyApp.stage}
+          onSubmit={(data) => {
+            addSurvey(data);
+            toast({ title: 'Survey Submitted', description: 'Thank you for your feedback!' });
+          }}
+        />
+      )}
     </div>
   );
 }

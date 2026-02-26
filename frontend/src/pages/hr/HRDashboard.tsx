@@ -13,9 +13,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { mockMPPRequests, mockCandidates, mockInterviews, pipelineStages } from '@/lib/mockHRData';
+import { mockMPPRequests, mockCandidates, mockInterviews } from '@/lib/mockHRData';
+import { usePipelineStages } from '@/lib/pipelineStageStore';
 
 export default function HRDashboard() {
+  const pipelineStages = usePipelineStages();
   const pendingMPPs = mockMPPRequests.filter(m => m.status === 'pending').length;
   const totalCandidates = mockCandidates.length;
   const upcomingInterviews = mockInterviews.filter(i => i.status === 'scheduled').length;

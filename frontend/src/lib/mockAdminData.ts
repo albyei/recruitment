@@ -4,7 +4,7 @@ export interface UserAccount {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  roles: UserRole[];
   department: string;
   status: 'active' | 'inactive';
   createdAt: string;
@@ -16,7 +16,7 @@ export const mockUserAccounts: UserAccount[] = [
     id: 'user-1',
     name: 'Siti Nurhaliza',
     email: 'siti.nurhaliza@perusahaan.co.id',
-    role: 'hr',
+    roles: ['hr'],
     department: 'Human Resources',
     status: 'active',
     createdAt: '2024-06-15',
@@ -26,7 +26,7 @@ export const mockUserAccounts: UserAccount[] = [
     id: 'user-2',
     name: 'Budi Santoso',
     email: 'budi.santoso@perusahaan.co.id',
-    role: 'hiring-manager',
+    roles: ['hiring-manager'],
     department: 'Engineering',
     status: 'active',
     createdAt: '2024-08-20',
@@ -36,7 +36,7 @@ export const mockUserAccounts: UserAccount[] = [
     id: 'user-3',
     name: 'Dewi Lestari',
     email: 'dewi.lestari@perusahaan.co.id',
-    role: 'hiring-manager',
+    roles: ['hiring-manager'],
     department: 'Marketing',
     status: 'active',
     createdAt: '2024-09-10',
@@ -46,7 +46,7 @@ export const mockUserAccounts: UserAccount[] = [
     id: 'user-4',
     name: 'Ahmad Wijaya',
     email: 'ahmad.wijaya@perusahaan.co.id',
-    role: 'hiring-manager',
+    roles: ['hiring-manager', 'hr'],
     department: 'Analytics',
     status: 'active',
     createdAt: '2024-10-05',
@@ -56,7 +56,7 @@ export const mockUserAccounts: UserAccount[] = [
     id: 'user-5',
     name: 'Rizky Pratama',
     email: 'rizky.pratama@perusahaan.co.id',
-    role: 'admin',
+    roles: ['admin'],
     department: 'IT',
     status: 'active',
     createdAt: '2024-01-01',
@@ -66,7 +66,7 @@ export const mockUserAccounts: UserAccount[] = [
     id: 'user-6',
     name: 'Putri Maharani',
     email: 'putri.maharani@perusahaan.co.id',
-    role: 'hiring-manager',
+    roles: ['hiring-manager'],
     department: 'Design',
     status: 'inactive',
     createdAt: '2024-07-22',

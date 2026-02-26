@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Calendar as CalendarIcon, 
   Clock, 
@@ -41,6 +42,7 @@ import {
 } from '@/lib/mockHRData';
 
 export default function HRInterviews() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [interviews, setInterviews] = useState<Interview[]>(mockInterviews);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
@@ -49,10 +51,24 @@ export default function HRInterviews() {
     date: '',
     time: '',
     duration: 60,
-    type: 'hr' as 'hr' | 'technical' | 'final',
+    type: 'hr' as 'hr' | 'user' | 'director',
     interviewers: ''
   });
   const { toast } = useToast();
+
+  // Auto-open schedule dialog with pre-filled candidate from URL
+  useEffect(() => {
+    const candidateId = searchParams.get('candidate');
+    if (candidateId) {
+      const candidate = mockCandidates.find(c => c.id === candidateId);
+      if (candidate) {
+        setNewInterview(prev => ({ ...prev, candidateId }));
+        setShowScheduleDialog(true);
+      }
+      searchParams.delete('candidate');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const upcomingInterviews = interviews.filter(i => i.status === 'scheduled');
   const completedInterviews = interviews.filter(i => i.status === 'completed');
@@ -125,9 +141,9 @@ export default function HRInterviews() {
               <h3 className="font-semibold">{interview.candidateName}</h3>
               <Badge variant={
                 interview.type === 'hr' ? 'default' : 
-                interview.type === 'technical' ? 'secondary' : 'outline'
+                interview.type === 'user' ? 'secondary' : 'outline'
               }>
-                {interview.type.toUpperCase()}
+                {interview.type === 'hr' ? 'HR Interview' : interview.type === 'user' ? 'User Interview' : 'Director Interview'}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">{interview.position}</p>
@@ -363,15 +379,15 @@ export default function HRInterviews() {
                 <Label>Interview Type</Label>
                 <Select 
                   value={newInterview.type}
-                  onValueChange={(value: 'hr' | 'technical' | 'final') => setNewInterview(prev => ({ ...prev, type: value }))}
+                  onValueChange={(value: 'hr' | 'user' | 'director') => setNewInterview(prev => ({ ...prev, type: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="hr">HR Interview</SelectItem>
-                    <SelectItem value="technical">Technical</SelectItem>
-                    <SelectItem value="final">Final Round</SelectItem>
+                    <SelectItem value="user">User Interview (Manager)</SelectItem>
+                    <SelectItem value="director">Director Interview</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

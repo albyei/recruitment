@@ -14,9 +14,9 @@ export default function AdminDashboard() {
   const totalUsers = mockUserAccounts.length;
   const activeUsers = mockUserAccounts.filter(u => u.status === 'active').length;
   const inactiveUsers = mockUserAccounts.filter(u => u.status === 'inactive').length;
-  const adminCount = mockUserAccounts.filter(u => u.role === 'admin').length;
-  const hrCount = mockUserAccounts.filter(u => u.role === 'hr').length;
-  const managerCount = mockUserAccounts.filter(u => u.role === 'hiring-manager').length;
+  const adminCount = mockUserAccounts.filter(u => u.roles.includes('admin')).length;
+  const hrCount = mockUserAccounts.filter(u => u.roles.includes('hr')).length;
+  const managerCount = mockUserAccounts.filter(u => u.roles.includes('hiring-manager')).length;
 
   const recentUsers = [...mockUserAccounts]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-muted-foreground capitalize">{user.role.replace('-', ' ')}</p>
+                      <p className="text-sm text-muted-foreground capitalize">{user.roles.map(r => r.replace('-', ' ')).join(', ')}</p>
                     </div>
                   </div>
                   <span className="text-sm text-muted-foreground">{user.createdAt}</span>

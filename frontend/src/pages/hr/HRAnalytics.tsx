@@ -64,7 +64,7 @@ export default function HRAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Cost per Hire</p>
-                <p className="text-3xl font-bold mt-1">${costPerHire.toLocaleString()}</p>
+                <p className="text-3xl font-bold mt-1">Rp {costPerHire.toLocaleString('id-ID')}</p>
                 <p className="text-sm text-muted-foreground">average</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
