@@ -1,7 +1,4 @@
-## Project info
-
-**URL**: https://lovable.dev/projects/f8d7c7c8-60d5-4d18-ba49-0eee355d3cef
-
+# Project info
 ## How can I edit this code?
 
 There are several ways of editing your application.
@@ -54,11 +51,3 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
