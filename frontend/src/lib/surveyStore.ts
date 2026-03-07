@@ -64,12 +64,12 @@ function subscribe(listener: () => void) {
   };
 }
 
-export function addSurvey(survey: Omit<SurveyResponse, 'id' | 'submittedAt'>) {
-  const newSurvey: SurveyResponse = {
+export function addSurvey(survey: Record<string, any>) {
+  const newSurvey = {
     ...survey,
     id: `survey-${Date.now()}`,
     submittedAt: new Date().toISOString().split('T')[0],
-  };
+  } as SurveyResponse;
   surveys = [...surveys, newSurvey];
   emitChange();
 }

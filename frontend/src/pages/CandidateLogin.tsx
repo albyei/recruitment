@@ -7,9 +7,11 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import logoWowrack from "@/assets/wowrack-logo.png";
+import { useCandidateAuth } from "@/contexts/CandidateAuthContext";
 
 export default function CandidateLogin() {
   const navigate = useNavigate();
+  const { login } = useCandidateAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -17,11 +19,15 @@ export default function CandidateLogin() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const success = await login(email, password);
     setIsLoading(false);
 
-    toast.success("Login successful!");
-    navigate("/candidate");
+    if (success) {
+      toast.success("Login successful!");
+      navigate("/candidate");
+    } else {
+      toast.error("Invalid email or password. Try: andi.prasetyo@email.com");
+    }
   };
 
   return (
@@ -83,7 +89,15 @@ export default function CandidateLogin() {
             </Button>
           </form>
 
-          <div className="mt-8 text-center space-y-4">
+          <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Demo account:</p>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p><span className="font-medium">Email:</span> sarah.wijaya@email.com</p>
+              <p><span className="font-medium">Password:</span> any password</p>
+            </div>
+          </div>
+
+          <div className="mt-6 text-center space-y-4">
             <Link 
               to="/forgot-password" 
               className="text-sm text-muted-foreground hover:text-primary block"

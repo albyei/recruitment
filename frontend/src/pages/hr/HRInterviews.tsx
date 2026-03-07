@@ -51,7 +51,7 @@ export default function HRInterviews() {
     date: '',
     time: '',
     duration: 60,
-    type: 'hr' as 'hr' | 'user' | 'director',
+    type: 'hr' as 'hr' | 'user' | 'director' | 'technical',
     interviewers: ''
   });
   const { toast } = useToast();
@@ -141,9 +141,10 @@ export default function HRInterviews() {
               <h3 className="font-semibold">{interview.candidateName}</h3>
               <Badge variant={
                 interview.type === 'hr' ? 'default' : 
-                interview.type === 'user' ? 'secondary' : 'outline'
+                interview.type === 'user' ? 'secondary' : 
+                interview.type === 'technical' ? 'destructive' : 'outline'
               }>
-                {interview.type === 'hr' ? 'HR Interview' : interview.type === 'user' ? 'User Interview' : 'Director Interview'}
+                {interview.type === 'hr' ? 'HR Interview' : interview.type === 'user' ? 'User Interview' : interview.type === 'technical' ? 'Technical Interview' : 'Director Interview'}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">{interview.position}</p>
@@ -379,13 +380,14 @@ export default function HRInterviews() {
                 <Label>Interview Type</Label>
                 <Select 
                   value={newInterview.type}
-                  onValueChange={(value: 'hr' | 'user' | 'director') => setNewInterview(prev => ({ ...prev, type: value }))}
+                  onValueChange={(value: 'hr' | 'user' | 'director' | 'technical') => setNewInterview(prev => ({ ...prev, type: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="hr">HR Interview</SelectItem>
+                    <SelectItem value="technical">Technical Interview</SelectItem>
                     <SelectItem value="user">User Interview (Manager)</SelectItem>
                     <SelectItem value="director">Director Interview</SelectItem>
                   </SelectContent>

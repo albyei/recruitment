@@ -5,11 +5,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import logoWowrack from "@/assets/wowrack-logo.png";
-
-// Mock user data - set to null for logged out, or an object for logged in
-const mockUser = null as { email: string; avatarUrl?: string } | null;
-// Example logged in state:
-// const mockUser = { email: "candidate@example.com", avatarUrl: "" };
+import { useCandidateAuth } from "@/contexts/CandidateAuthContext";
 
 const navLinks = [
   { name: "Home", path: "/" },
@@ -20,12 +16,15 @@ const navLinks = [
 export function PublicHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { candidate, isLoggedIn } = useCandidateAuth();
 
-  // Use mock user data
-  const user = mockUser;
-
-  const getInitials = (email: string) => {
-    return email.substring(0, 2).toUpperCase();
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
   };
 
   return (
@@ -52,19 +51,17 @@ export function PublicHeader() {
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
-          {user ? (
-            <>
+        <div className="hidden md:flex items-center gap-3">
+          {isLoggedIn && candidate ? (
+            <Link to="/candidate" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <span className="text-sm font-medium text-foreground">{candidate.fullName}</span>
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user.avatarUrl} />
+                <AvatarImage src={candidate.avatarUrl} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                  {getInitials(user.email || "U")}
+                  {getInitials(candidate.fullName)}
                 </AvatarFallback>
               </Avatar>
-              <Button variant="secondary" asChild>
-                <Link to="/candidate-dashboard">Go to Dashboard</Link>
-              </Button>
-            </>
+            </Link>
           ) : (
             <>
               <Button 
@@ -118,21 +115,23 @@ export function PublicHeader() {
                 </Link>
               ))}
               <div className="pt-2 border-t border-border mt-2 flex flex-col gap-2">
-                {user ? (
-                  <>
-                    <div className="flex items-center gap-2 px-3 py-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatarUrl} />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                          {getInitials(user.email || "U")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm text-muted-foreground">{user.email}</span>
+                {isLoggedIn && candidate ? (
+                  <Link
+                    to="/candidate"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={candidate.avatarUrl} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {getInitials(candidate.fullName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{candidate.fullName}</p>
+                      <p className="text-xs text-muted-foreground">Go to Dashboard</p>
                     </div>
-                    <Button variant="secondary" asChild>
-                      <Link to="/candidate-dashboard" onClick={() => setIsOpen(false)}>Go to Dashboard</Link>
-                    </Button>
-                  </>
+                  </Link>
                 ) : (
                   <>
                     <Button variant="ghost" asChild className="justify-start">

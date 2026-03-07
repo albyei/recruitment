@@ -7,9 +7,11 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import logoWowrack from "@/assets/wowrack-logo.png";
+import { useCandidateAuth } from "@/contexts/CandidateAuthContext";
 
 export default function CandidateRegister() {
   const navigate = useNavigate();
+  const { register } = useCandidateAuth();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -32,11 +34,16 @@ export default function CandidateRegister() {
     }
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const success = await register({
+      fullName: formData.fullName,
+      email: formData.email,
+    });
     setIsLoading(false);
 
-    toast.success("Registration successful! Please check your email to verify your account.");
-    navigate("/candidate-login");
+    if (success) {
+      toast.success("Registration successful! You are now logged in.");
+      navigate("/candidate");
+    }
   };
 
   return (

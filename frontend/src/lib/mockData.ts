@@ -32,6 +32,8 @@ export interface Job {
   responsibilities: string[];
   requirements: string[];
   benefits: string[];
+  selectedBenefitIds?: string[];
+  isActive?: boolean;
 }
 
 export const jobs: Job[] = [

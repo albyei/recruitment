@@ -6,61 +6,79 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Briefcase, MapPin, DollarSign, Search, Filter, CalendarDays, Eye, Pencil, Trash2, Plus } from 'lucide-react';
+import { Briefcase, MapPin, Search, Filter, CalendarDays, Eye, Pencil, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import BenefitsSelector from '@/components/hiring-manager/BenefitsSelector';
+import { getAllBenefits } from '@/lib/benefitsStore';
 
 export default function HRJobOpenings() {
-  const [jobList, setJobList] = useState<Job[]>(initialJobs);
+  const [jobList, setJobList] = useState<Job[]>(
+    initialJobs.map(j => ({ ...j, isActive: j.isActive ?? true }))
+  );
   const [search, setSearch] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Dialog states
   const [viewJob, setViewJob] = useState<Job | null>(null);
   const [editJob, setEditJob] = useState<Job | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [deleteJob, setDeleteJob] = useState<Job | null>(null);
 
   // Form state for create/edit
   const emptyForm: Omit<Job, 'id'> = {
     title: '', department: '', location: '', type: '', salary: '',
     postedDate: new Date().toISOString().split('T')[0],
     description: '', responsibilities: [], requirements: [], benefits: [],
+    selectedBenefitIds: [], isActive: true,
   };
   const [formData, setFormData] = useState<Omit<Job, 'id'>>(emptyForm);
   const [formResponsibilities, setFormResponsibilities] = useState('');
   const [formRequirements, setFormRequirements] = useState('');
   const [formBenefits, setFormBenefits] = useState('');
+  const [formSelectedBenefitIds, setFormSelectedBenefitIds] = useState<string[]>([]);
 
   const filtered = useMemo(() => {
-    return jobList.filter((job) => {
+    const results = jobList.filter((job) => {
       const matchesSearch =
         job.title.toLowerCase().includes(search.toLowerCase()) ||
         job.department.toLowerCase().includes(search.toLowerCase());
       const matchesDept = departmentFilter === 'all' || job.department === departmentFilter;
       const matchesLoc = locationFilter === 'all' || job.location === locationFilter;
       const matchesType = typeFilter === 'all' || job.type === typeFilter;
-      return matchesSearch && matchesDept && matchesLoc && matchesType;
+      const matchesStatus = statusFilter === 'all' ||
+        (statusFilter === 'active' && job.isActive !== false) ||
+        (statusFilter === 'inactive' && job.isActive === false);
+      return matchesSearch && matchesDept && matchesLoc && matchesType && matchesStatus;
     });
-  }, [search, departmentFilter, locationFilter, typeFilter, jobList]);
+    // Sort: active first, then inactive
+    return results.sort((a, b) => {
+      const aActive = a.isActive !== false ? 0 : 1;
+      const bActive = b.isActive !== false ? 0 : 1;
+      return aActive - bActive;
+    });
+  }, [search, departmentFilter, locationFilter, typeFilter, statusFilter, jobList]);
 
   const clearFilters = () => {
     setSearch('');
     setDepartmentFilter('all');
     setLocationFilter('all');
     setTypeFilter('all');
+    setStatusFilter('all');
   };
 
-  const hasActiveFilters = search || departmentFilter !== 'all' || locationFilter !== 'all' || typeFilter !== 'all';
+  const hasActiveFilters = search || departmentFilter !== 'all' || locationFilter !== 'all' || typeFilter !== 'all' || statusFilter !== 'all';
 
   const openCreate = () => {
     setFormData(emptyForm);
     setFormResponsibilities('');
     setFormRequirements('');
     setFormBenefits('');
+    setFormSelectedBenefitIds([]);
     setIsCreateOpen(true);
   };
 
@@ -69,6 +87,7 @@ export default function HRJobOpenings() {
     setFormResponsibilities(job.responsibilities.join('\n'));
     setFormRequirements(job.requirements.join('\n'));
     setFormBenefits(job.benefits.join('\n'));
+    setFormSelectedBenefitIds(job.selectedBenefitIds || []);
     setEditJob(job);
   };
 
@@ -83,6 +102,7 @@ export default function HRJobOpenings() {
       responsibilities: formResponsibilities.split('\n').filter(Boolean),
       requirements: formRequirements.split('\n').filter(Boolean),
       benefits: formBenefits.split('\n').filter(Boolean),
+      selectedBenefitIds: formSelectedBenefitIds,
     };
 
     if (editJob) {
@@ -96,15 +116,23 @@ export default function HRJobOpenings() {
     }
   };
 
-  const handleDelete = () => {
-    if (deleteJob) {
-      setJobList(prev => prev.filter(j => j.id !== deleteJob.id));
-      toast.success('Job opening deleted');
-      setDeleteJob(null);
-    }
+  const toggleJobActive = (job: Job) => {
+    const newStatus = job.isActive === false ? true : false;
+    setJobList(prev => prev.map(j => j.id === job.id ? { ...j, isActive: newStatus } : j));
+    toast.success(`Job "${job.title}" is now ${newStatus ? 'active' : 'inactive'}`);
   };
 
   const isFormOpen = isCreateOpen || !!editJob;
+
+  // Resolve benefit IDs to labels for view dialog
+  const resolvedBenefitLabels = (ids: string[] | undefined) => {
+    if (!ids || ids.length === 0) return [];
+    const allBenefits = getAllBenefits();
+    return ids.map(id => {
+      const b = allBenefits.find(b => b.id === id);
+      return b ? `${b.emoji} ${b.label}` : id;
+    });
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -173,6 +201,16 @@ export default function HRJobOpenings() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full lg:w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
             {hasActiveFilters && (
               <Button variant="outline" onClick={clearFilters} size="sm" className="shrink-0">
                 <Filter className="h-4 w-4 mr-1" />
@@ -195,13 +233,16 @@ export default function HRJobOpenings() {
       ) : (
         <div className="grid gap-4">
           {filtered.map((job) => (
-            <Card key={job.id} className="hover:shadow-md transition-shadow">
+            <Card key={job.id} className={`hover:shadow-md transition-shadow ${job.isActive === false ? 'opacity-60' : ''}`}>
               <CardContent className="p-5">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-lg">{job.title}</h3>
                       <Badge variant="outline">{job.type}</Badge>
+                      <Badge variant={job.isActive !== false ? 'default' : 'secondary'}>
+                        {job.isActive !== false ? 'Active' : 'Inactive'}
+                      </Badge>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -212,8 +253,7 @@ export default function HRJobOpenings() {
                         <MapPin className="h-3.5 w-3.5" />
                         {job.location}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <DollarSign className="h-3.5 w-3.5" />
+                      <span className="flex items-center gap-1 text-sm text-muted-foreground">
                         {job.salary}
                       </span>
                       <span className="flex items-center gap-1">
@@ -232,9 +272,12 @@ export default function HRJobOpenings() {
                       <Pencil className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
-                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteJob(job)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1.5 ml-1">
+                      <Switch
+                        checked={job.isActive !== false}
+                        onCheckedChange={() => toggleJobActive(job)}
+                      />
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -253,31 +296,49 @@ export default function HRJobOpenings() {
           {viewJob && (
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-medium mb-1">Salary</p>
+                <p className="text-sm font-semibold text-foreground mb-1">Status</p>
+                <Badge variant={viewJob.isActive !== false ? 'default' : 'secondary'}>
+                  {viewJob.isActive !== false ? 'Active' : 'Inactive'}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground mb-1">Salary</p>
                 <p className="text-sm text-muted-foreground">{viewJob.salary}</p>
               </div>
               <div>
-                <p className="text-sm font-medium mb-1">Description</p>
+                <p className="text-sm font-semibold text-foreground mb-1">Description</p>
                 <p className="text-sm text-muted-foreground">{viewJob.description}</p>
               </div>
               <div>
-                <p className="text-sm font-medium mb-1">Responsibilities</p>
+                <p className="text-sm font-semibold text-foreground mb-1">Responsibilities</p>
                 <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                   {viewJob.responsibilities.map((r, i) => <li key={i}>{r}</li>)}
                 </ul>
               </div>
               <div>
-                <p className="text-sm font-medium mb-1">Requirements</p>
+                <p className="text-sm font-semibold text-foreground mb-1">Requirements</p>
                 <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                   {viewJob.requirements.map((r, i) => <li key={i}>{r}</li>)}
                 </ul>
               </div>
-              <div>
-                <p className="text-sm font-medium mb-1">Benefits</p>
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                  {viewJob.benefits.map((b, i) => <li key={i}>{b}</li>)}
-                </ul>
-              </div>
+              {viewJob.benefits.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-foreground mb-1">Benefits (Text)</p>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    {viewJob.benefits.map((b, i) => <li key={i}>{b}</li>)}
+                  </ul>
+                </div>
+              )}
+              {viewJob.selectedBenefitIds && viewJob.selectedBenefitIds.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-foreground mb-1">Benefits</p>
+                  <div className="flex flex-wrap gap-2">
+                    {resolvedBenefitLabels(viewJob.selectedBenefitIds).map((label, i) => (
+                      <Badge key={i} variant="outline">{label}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
@@ -346,26 +407,15 @@ export default function HRJobOpenings() {
               <Label>Benefits (one per line)</Label>
               <Textarea value={formBenefits} onChange={e => setFormBenefits(e.target.value)} rows={4} placeholder="Enter each benefit on a new line" />
             </div>
+            {/* Benefits Selector */}
+            <BenefitsSelector
+              selectedBenefits={formSelectedBenefitIds}
+              onBenefitsChange={setFormSelectedBenefitIds}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsCreateOpen(false); setEditJob(null); }}>Cancel</Button>
             <Button onClick={handleSave}>{editJob ? 'Save Changes' : 'Create Job'}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation */}
-      <Dialog open={!!deleteJob} onOpenChange={() => setDeleteJob(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Job Opening</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete "{deleteJob?.title}"? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteJob(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

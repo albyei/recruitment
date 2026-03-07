@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AuthProvider } from "./contexts/AuthContext";
+import { CandidateAuthProvider } from "./contexts/CandidateAuthContext";
 import Index from "./pages/Index";
 import Careers from "./pages/Careers";
 import JobDetail from "./pages/JobDetail";
@@ -48,57 +49,59 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/careers/:id" element={<JobDetail />} />
-            <Route path="/careers/:id/apply" element={<QuickApply />} />
-            <Route path="/news" element={<News />} />
-            <Route path="/news/:id" element={<NewsDetail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/candidate-login" element={<CandidateLogin />} />
-            <Route path="/candidate-register" element={<CandidateRegister />} />
-            
-            {/* Candidate Portal (separate layout) */}
-            <Route path="/candidate" element={<CandidateLayout />}>
-              <Route index element={<CandidateDashboard />} />
-              <Route path="applications" element={<CandidateApplications />} />
-              <Route path="profile" element={<CandidateProfile />} />
-            </Route>
+          <CandidateAuthProvider>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/careers/:id" element={<JobDetail />} />
+              <Route path="/careers/:id/apply" element={<QuickApply />} />
+              <Route path="/news" element={<News />} />
+              <Route path="/news/:id" element={<NewsDetail />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/candidate-login" element={<CandidateLogin />} />
+              <Route path="/candidate-register" element={<CandidateRegister />} />
+              
+              {/* Candidate Portal (separate layout) */}
+              <Route path="/candidate" element={<CandidateLayout />}>
+                <Route index element={<CandidateDashboard />} />
+                <Route path="applications" element={<CandidateApplications />} />
+                <Route path="profile" element={<CandidateProfile />} />
+              </Route>
 
-            {/* Dashboard redirect */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            
-            {/* Unified Internal Portal */}
-            <Route element={<InternalLayout />}>
-              {/* HR */}
-              <Route path="/hr" element={<HRDashboard />} />
-              <Route path="/hr/requisitions" element={<HRRequisitions />} />
-              <Route path="/hr/job-openings" element={<HRJobOpenings />} />
-              <Route path="/hr/candidates" element={<HRCandidates />} />
-              <Route path="/hr/pipeline" element={<HRPipeline />} />
-              <Route path="/hr/interviews" element={<HRInterviews />} />
-              <Route path="/hr/analytics" element={<HRAnalytics />} />
-              <Route path="/hr/news" element={<HRNewsManagement />} />
-              <Route path="/hr/surveys" element={<HRSurveys />} />
+              {/* Dashboard redirect */}
+              <Route path="/dashboard" element={<Dashboard />} />
+              
+              {/* Unified Internal Portal */}
+              <Route element={<InternalLayout />}>
+                {/* HR */}
+                <Route path="/hr" element={<HRDashboard />} />
+                <Route path="/hr/requisitions" element={<HRRequisitions />} />
+                <Route path="/hr/job-openings" element={<HRJobOpenings />} />
+                <Route path="/hr/candidates" element={<HRCandidates />} />
+                <Route path="/hr/pipeline" element={<HRPipeline />} />
+                <Route path="/hr/interviews" element={<HRInterviews />} />
+                <Route path="/hr/analytics" element={<HRAnalytics />} />
+                <Route path="/hr/news" element={<HRNewsManagement />} />
+                <Route path="/hr/surveys" element={<HRSurveys />} />
 
-              {/* Hiring Manager */}
-              <Route path="/hiring-manager" element={<HiringManagerDashboard />} />
-              <Route path="/hiring-manager/mpp" element={<HiringManagerMPP />} />
-              <Route path="/hiring-manager/recruitment" element={<HiringManagerRecruitment />} />
-              <Route path="/hiring-manager/inbox" element={<HiringManagerInbox />} />
+                {/* Hiring Manager */}
+                <Route path="/hiring-manager" element={<HiringManagerDashboard />} />
+                <Route path="/hiring-manager/mpp" element={<HiringManagerMPP />} />
+                <Route path="/hiring-manager/recruitment" element={<HiringManagerRecruitment />} />
+                <Route path="/hiring-manager/inbox" element={<HiringManagerInbox />} />
 
-              {/* Admin */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<AdminUsers />} />
-              <Route path="/admin/departments" element={<AdminDepartments />} />
-              <Route path="/admin/settings" element={<AdminSettings />} />
-            </Route>
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+                {/* Admin */}
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/departments" element={<AdminDepartments />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
+              </Route>
+              
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </CandidateAuthProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

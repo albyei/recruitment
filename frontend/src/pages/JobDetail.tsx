@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Briefcase, DollarSign, Clock, Share2 } from "lucide-react";
+import { ArrowLeft, MapPin, Briefcase, Clock, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -73,7 +73,6 @@ export default function JobDetail() {
                     {job.location}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <DollarSign className="h-4 w-4" />
                     {job.salary}
                   </span>
                   <span className="flex items-center gap-1.5">

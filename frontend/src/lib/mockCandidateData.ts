@@ -22,13 +22,13 @@ export interface CandidateProfile {
 
 export const mockCandidateProfile: CandidateProfile = {
   id: '1',
-  fullName: 'Andi Prasetyo',
-  email: 'andi.prasetyo@email.com',
-  phone: '+62 812 3456 7890',
-  address: 'Jakarta Selatan, DKI Jakarta',
-  linkedinUrl: 'https://linkedin.com/in/andiprasetyo',
-  avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-  resumeFileName: 'Andi_Prasetyo_CV.pdf',
+  fullName: 'Sarah Wijaya',
+  email: 'sarah.wijaya@email.com',
+  phone: '+62 813 9876 5432',
+  address: 'Bandung, Jawa Barat',
+  linkedinUrl: 'https://linkedin.com/in/sarahwijaya',
+  avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
+  resumeFileName: 'Sarah_Wijaya_CV.pdf',
   resumeUploadDate: '2025-01-15',
 };
 

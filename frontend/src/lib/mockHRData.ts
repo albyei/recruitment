@@ -75,7 +75,7 @@ export interface Interview {
   scheduledTime: string;
   duration: number;
   interviewers: string[];
-  type: 'hr' | 'user' | 'director';
+  type: 'hr' | 'user' | 'director' | 'technical';
   status: 'scheduled' | 'completed' | 'cancelled';
   meetingLink?: string;
   aiScore?: number;

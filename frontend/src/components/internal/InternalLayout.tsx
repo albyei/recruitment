@@ -89,7 +89,7 @@ export default function InternalLayout() {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/login');
   };
 
   return (

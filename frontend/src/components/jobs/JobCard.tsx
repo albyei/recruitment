@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Briefcase, Clock, DollarSign } from "lucide-react";
+import { MapPin, Briefcase, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Job } from "@/lib/mockData";
@@ -37,7 +37,6 @@ export function JobCard({ job, index = 0 }: JobCardProps) {
             {job.location}
           </span>
           <span className="flex items-center gap-1.5">
-            <DollarSign className="h-4 w-4" />
             {job.salary}
           </span>
         </div>

@@ -130,7 +130,7 @@ export default function HRLayout() {
 
           {/* Logout */}
           <div className="p-4 border-t">
-            <Link to="/">
+            <Link to="/login">
               <Button variant="ghost" className="w-full justify-start text-muted-foreground">
                 <LogOut className="h-5 w-5 mr-3" />
                 Sign Out

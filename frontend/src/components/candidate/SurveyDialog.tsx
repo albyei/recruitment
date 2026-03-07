@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { useSurveyQuestions } from '@/lib/surveyQuestionStore';
 
 interface SurveyDialogProps {
   open: boolean;
@@ -15,35 +16,18 @@ interface SurveyDialogProps {
   position: string;
   department: string;
   stage: 'Hired' | 'Rejected';
-  onSubmit: (data: {
-    applicationId: string;
-    position: string;
-    department: string;
-    stage: 'Hired' | 'Rejected';
-    candidateName: string;
-    positionApplied: string;
-    easyApplication: number;
-    wellOrganized: number;
-    timelyCommunication: number;
-    supportiveRecruiter: number;
-    feltRespected: number;
-    fairInterview: number;
-    clearUnderstanding: number;
-    wouldApplyAgain: number;
-    wouldRecommend: number;
-    improvementSuggestion: string;
-    contactEmail: string;
-  }) => void;
+  onSubmit: (data: Record<string, any>) => void;
 }
 
-function ScaleSelector({ value, onChange, label }: {
+function ScaleSelector({ value, onChange, label, required }: {
   value: number;
   onChange: (v: number) => void;
   label: string;
+  required: boolean;
 }) {
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium leading-snug">{label} <span className="text-destructive">*</span></Label>
+      <Label className="text-sm font-medium leading-snug">{label} {required && <span className="text-destructive">*</span>}</Label>
       <div className="flex items-center gap-1">
         <span className="text-[10px] text-muted-foreground w-16 text-right pr-2 shrink-0">Not Agree</span>
         <div className="flex gap-1 flex-1 justify-center">
@@ -69,51 +53,29 @@ function ScaleSelector({ value, onChange, label }: {
   );
 }
 
-const QUESTIONS = [
-  { key: 'easyApplication', label: 'The job application process was easy.' },
-  { key: 'wellOrganized', label: 'The recruitment process felt well-organized and easy to follow.' },
-  { key: 'timelyCommunication', label: 'Communication from the recruitment team was timely and clear.' },
-  { key: 'supportiveRecruiter', label: 'The recruiter was supportive, professional, and helpful throughout the process.' },
-  { key: 'feltRespected', label: 'I felt respected and valued as a candidate during the recruitment process.' },
-  { key: 'fairInterview', label: 'The interview and assessment process felt fair and relevant to the role.' },
-  { key: 'clearUnderstanding', label: 'I gained a clear understanding of the role and expectations during the recruitment process.' },
-  { key: 'wouldApplyAgain', label: 'Based on this experience, I would consider applying for future opportunities at Wowrack.' },
-  { key: 'wouldRecommend', label: 'I would recommend applying to Wowrack to a friend or colleague.' },
-] as const;
-
-type RatingKey = typeof QUESTIONS[number]['key'];
-
 export default function SurveyDialog({
   open, onOpenChange, applicationId, position, department, stage, onSubmit,
 }: SurveyDialogProps) {
+  const questions = useSurveyQuestions();
   const [positionApplied, setPositionApplied] = useState(position);
-  const [ratings, setRatings] = useState<Record<RatingKey, number>>({
-    easyApplication: 0,
-    wellOrganized: 0,
-    timelyCommunication: 0,
-    supportiveRecruiter: 0,
-    feltRespected: 0,
-    fairInterview: 0,
-    clearUnderstanding: 0,
-    wouldApplyAgain: 0,
-    wouldRecommend: 0,
-  });
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [textAnswers, setTextAnswers] = useState<Record<string, string>>({});
   const [improvementSuggestion, setImprovementSuggestion] = useState('');
   const [contactEmail, setContactEmail] = useState('');
 
   const reset = () => {
     setPositionApplied(position);
-    setRatings({
-      easyApplication: 0, wellOrganized: 0, timelyCommunication: 0,
-      supportiveRecruiter: 0, feltRespected: 0, fairInterview: 0,
-      clearUnderstanding: 0, wouldApplyAgain: 0, wouldRecommend: 0,
-    });
+    setRatings({});
+    setTextAnswers({});
     setImprovementSuggestion('');
     setContactEmail('');
   };
 
-  const allRated = Object.values(ratings).every((v) => v > 0);
-  const canSubmit = positionApplied.trim() !== '' && allRated;
+  const canSubmit = positionApplied.trim() !== '' && questions.every((q) => {
+    if (!q.required) return true;
+    if (q.type === 'rating') return (ratings[q.key] || 0) > 0;
+    return (textAnswers[q.key] || '').trim() !== '';
+  });
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -125,6 +87,7 @@ export default function SurveyDialog({
       candidateName: 'Andi Prasetyo',
       positionApplied,
       ...ratings,
+      ...textAnswers,
       improvementSuggestion,
       contactEmail,
     });
@@ -132,8 +95,12 @@ export default function SurveyDialog({
     onOpenChange(false);
   };
 
-  const setRating = (key: RatingKey, value: number) => {
+  const setRating = (key: string, value: number) => {
     setRatings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const setTextAnswer = (key: string, value: string) => {
+    setTextAnswers((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -159,14 +126,29 @@ export default function SurveyDialog({
             />
           </div>
 
-          {/* Rating Questions */}
-          {QUESTIONS.map((q) => (
-            <ScaleSelector
-              key={q.key}
-              label={q.label}
-              value={ratings[q.key]}
-              onChange={(v) => setRating(q.key, v)}
-            />
+          {/* Dynamic Questions */}
+          {questions.map((q) => (
+            q.type === 'rating' ? (
+              <ScaleSelector
+                key={q.key}
+                label={q.label}
+                value={ratings[q.key] || 0}
+                onChange={(v) => setRating(q.key, v)}
+                required={q.required}
+              />
+            ) : (
+              <div key={q.key} className="space-y-2">
+                <Label className="text-sm font-medium leading-snug">
+                  {q.label} {q.required && <span className="text-destructive">*</span>}
+                </Label>
+                <Textarea
+                  placeholder="Your answer..."
+                  value={textAnswers[q.key] || ''}
+                  onChange={(e) => setTextAnswer(q.key, e.target.value)}
+                  rows={3}
+                />
+              </div>
+            )
           ))}
 
           {/* Improvement Suggestion */}
