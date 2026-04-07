@@ -1,0 +1,24 @@
+# Binaries
+bin/
+*.exe
+api.exe
+
+# Logs and test results
+*.log
+test_out*
+
+# Environment
+.env
+
+# Infrastructure
+minio-data/
+postgres-data/
+redis-data/
+
+# Tools & Cache
+.claude/
+.vscode/
+.devcontainer/
+
+# Dependencies
+vendor/

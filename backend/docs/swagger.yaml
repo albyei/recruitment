@@ -1,0 +1,1739 @@
+basePath: /api/v1
+definitions:
+  internal_handlers.AddRoleRequest:
+    properties:
+      role:
+        example: hr
+        type: string
+    required:
+    - role
+    type: object
+  wowrack-recruitment_internal_dto.CreateDepartmentRequest:
+    properties:
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  wowrack-recruitment_internal_dto.DeleteMyAccountRequest:
+    properties:
+      password:
+        minLength: 6
+        type: string
+      reason:
+        maxLength: 500
+        type: string
+    required:
+    - password
+    type: object
+  wowrack-recruitment_internal_dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  wowrack-recruitment_internal_dto.RejectJobRequest:
+    properties:
+      reason:
+        maxLength: 1000
+        minLength: 10
+        type: string
+    required:
+    - reason
+    type: object
+  wowrack-recruitment_internal_dto.UpdateDepartmentRequest:
+    properties:
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    type: object
+  wowrack-recruitment_internal_dto.UpdateStatusRequest:
+    properties:
+      duration_minutes:
+        description: wajib jika status interview, misal 60
+        type: integer
+      interview_date:
+        description: wajib jika status interview
+        type: string
+      notes:
+        type: string
+      status:
+        enum:
+        - screening
+        - contacted
+        - hr_interview
+        - hiring_manager_interview
+        - salary_negotiation
+        - hired
+        - rejected
+        type: string
+    required:
+    - status
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: dev@albyeicorp.com
+    name: Albyei Corp Engineering
+  description: API untuk sistem rekrutmen Wowrack/Albyei Corp. Mendukung multi-role
+    (Admin, HR, Hiring Manager, Candidate).
+  termsOfService: http://swagger.io/terms/
+  title: Wowrack Recruitment API
+  version: "1.0"
+paths:
+  /admin/users:
+    get:
+      description: Get paginated list of all users (Admin/HR/Manager only)
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get all users
+      tags:
+      - Admin
+    post:
+      consumes:
+      - multipart/form-data
+      description: Admin creates a new user (HR or Hiring Manager) and sends credentials
+        via email
+      parameters:
+      - description: Full name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Email address
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: User role
+        enum:
+        - hr
+        - hiring_manager
+        in: formData
+        name: role
+        required: true
+        type: string
+      - description: Phone number
+        in: formData
+        name: phone
+        type: string
+      - description: LinkedIn URL
+        in: formData
+        name: linkedin
+        type: string
+      - description: Address
+        in: formData
+        name: address
+        type: string
+      - description: Gender
+        enum:
+        - male
+        - female
+        in: formData
+        name: gender
+        type: string
+      - description: Profile photo
+        in: formData
+        name: photo
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Create user by admin
+      tags:
+      - Admin
+  /admin/users/{id}/roles:
+    get:
+      description: Get all roles assigned to a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get user roles
+      tags:
+      - Admin Roles
+    post:
+      consumes:
+      - application/json
+      description: Assign a new role to a user (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Role to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.AddRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Add role to user
+      tags:
+      - Admin Roles
+  /admin/users/{id}/roles/{role}:
+    delete:
+      description: Remove a specific role from a user (admin only). Cannot remove
+        the last role.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Role to remove
+        in: path
+        name: role
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Remove role from user
+      tags:
+      - Admin Roles
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and get JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/wowrack-recruitment_internal_dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Login
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new candidate account with optional photo upload
+      parameters:
+      - description: Full name (min 3, max 100)
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Email address
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Password (min 8, must contain special char)
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: Phone number
+        in: formData
+        name: phone
+        type: string
+      - description: LinkedIn URL
+        in: formData
+        name: linkedin
+        type: string
+      - description: Address
+        in: formData
+        name: address
+        type: string
+      - description: Gender
+        enum:
+        - male
+        - female
+        in: formData
+        name: gender
+        type: string
+      - description: Profile photo
+        in: formData
+        name: photo
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a new candidate
+      tags:
+      - Auth
+  /candidate/applications:
+    get:
+      description: Get all job applications submitted by the authenticated candidate
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get my applications
+      tags:
+      - Candidate
+  /candidate/applications/{id}:
+    delete:
+      description: Withdraw/cancel a pending job application
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Withdraw application
+      tags:
+      - Candidate
+    put:
+      consumes:
+      - multipart/form-data
+      description: Edit a pending job application (name, phone, address, linkedin,
+        optional new CV)
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Full name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Phone number
+        in: formData
+        name: phone
+        required: true
+        type: string
+      - description: Address
+        in: formData
+        name: address
+        type: string
+      - description: LinkedIn URL
+        in: formData
+        name: linkedin
+        type: string
+      - description: New CV file (optional)
+        in: formData
+        name: cv
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Edit application
+      tags:
+      - Candidate
+  /hiring_manager/jobs:
+    get:
+      description: Get paginated list of jobs for Hiring Manager dashboard
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get all jobs (Hiring Manager view)
+      tags:
+      - Hiring Manager
+    post:
+      consumes:
+      - multipart/form-data
+      description: Hiring Manager creates a new job posting in draft status
+      parameters:
+      - description: Job title (min 10, max 200)
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Job description (min 50)
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: Job requirements
+        in: formData
+        name: requirements
+        type: string
+      - description: Job benefits
+        in: formData
+        name: benefits
+        type: string
+      - description: Job location
+        in: formData
+        name: location
+        type: string
+      - description: Employment type
+        enum:
+        - full-time
+        - internship
+        - contract
+        - freelance
+        in: formData
+        name: employment_type
+        type: string
+      - description: Salary range
+        in: formData
+        name: salary_range
+        type: string
+      - description: Department ID
+        in: formData
+        name: department_id
+        required: true
+        type: integer
+      - description: Number of positions
+        in: formData
+        name: quantity_needed
+        type: integer
+      - description: Priority
+        enum:
+        - low
+        - medium
+        - high
+        - urgent
+        in: formData
+        name: priority
+        type: string
+      - description: Job description file
+        in: formData
+        name: file
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Create a new job (draft)
+      tags:
+      - Hiring Manager
+  /hiring_manager/jobs/{id}:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update an existing job posting
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Job title
+        in: formData
+        name: title
+        type: string
+      - description: Job description
+        in: formData
+        name: description
+        type: string
+      - description: Job description file
+        in: formData
+        name: file
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Update a job
+      tags:
+      - Hiring Manager
+  /hiring_manager/jobs/{id}/publish:
+    patch:
+      description: Hiring Manager publishes an approved job posting
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Publish a job
+      tags:
+      - Hiring Manager
+  /hiring_manager/jobs/{id}/submit:
+    patch:
+      description: Hiring Manager submits a draft job for HR approval
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Submit job for approval
+      tags:
+      - Hiring Manager
+  /hr/active-vacancies:
+    get:
+      description: Get list of all active (published) job vacancies for HR dashboard
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get active vacancies
+      tags:
+      - HR Applications
+  /hr/active-vacancies/{id}:
+    get:
+      description: Get a single active vacancy detail by its ID (HR only)
+      parameters:
+      - description: Vacancy ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get active vacancy by ID
+      tags:
+      - HR Applications
+  /hr/applications:
+    get:
+      description: Get paginated list of all job applications (HR only)
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get all applications
+      tags:
+      - HR Applications
+  /hr/applications/{id}:
+    get:
+      description: Get a single application detail by its ID (HR only)
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get application by ID
+      tags:
+      - HR Applications
+  /hr/applications/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Change the status of a job application (HR only)
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/wowrack-recruitment_internal_dto.UpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Update application status
+      tags:
+      - HR Applications
+  /hr/departments:
+    get:
+      description: Get list of all departments (HR only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get all departments
+      tags:
+      - Departments
+    post:
+      consumes:
+      - application/json
+      description: Create a new department (HR only)
+      parameters:
+      - description: Department name
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/wowrack-recruitment_internal_dto.CreateDepartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Create department
+      tags:
+      - Departments
+  /hr/departments/{id}:
+    delete:
+      description: Delete a department by ID (HR only)
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Delete department
+      tags:
+      - Departments
+    get:
+      description: Get a single department by its ID (HR only)
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get department by ID
+      tags:
+      - Departments
+    put:
+      consumes:
+      - application/json
+      description: Update an existing department name (HR only)
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Department data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/wowrack-recruitment_internal_dto.UpdateDepartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Update department
+      tags:
+      - Departments
+  /hr/jobs:
+    get:
+      description: Get paginated list of all jobs for HR dashboard
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get all jobs (HR view)
+      tags:
+      - HR Jobs
+  /hr/jobs/{id}:
+    delete:
+      description: HR deletes a job posting
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Delete a job
+      tags:
+      - HR Jobs
+  /hr/jobs/{id}/applications:
+    get:
+      description: Get paginated list of applications for a specific job (HR only)
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get applications by job
+      tags:
+      - HR Applications
+  /hr/jobs/{id}/approve:
+    patch:
+      description: HR approves a submitted job posting
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Approve a job
+      tags:
+      - HR Jobs
+  /hr/jobs/{id}/close:
+    patch:
+      description: HR closes a published job posting
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Close a job
+      tags:
+      - HR Jobs
+  /hr/jobs/{id}/reject:
+    patch:
+      consumes:
+      - application/json
+      description: HR rejects a submitted job posting with a reason
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Rejection reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/wowrack-recruitment_internal_dto.RejectJobRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Reject a job
+      tags:
+      - HR Jobs
+  /hr/news-cultures:
+    get:
+      description: Get paginated list of news articles with optional filters (HR only)
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by published status
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: published
+        type: string
+      - description: Search by title
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get all news/culture articles
+      tags:
+      - News
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new news or culture article with image and optional gallery
+        (HR only)
+      parameters:
+      - description: Article title (min 5, max 200)
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Article content (min 20)
+        in: formData
+        name: content
+        required: true
+        type: string
+      - description: Short excerpt (max 500)
+        in: formData
+        name: excerpt
+        required: true
+        type: string
+      - description: Publish immediately
+        in: formData
+        name: published
+        type: boolean
+      - description: Main image
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Gallery images (multiple)
+        in: formData
+        name: gallery
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Create news/culture article
+      tags:
+      - News
+  /hr/news-cultures/{id}:
+    delete:
+      description: Permanently delete a news article and all associated photos (HR
+        only)
+      parameters:
+      - description: News ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Delete news/culture article
+      tags:
+      - News
+    get:
+      description: Get a single news/culture article by its ID (HR only)
+      parameters:
+      - description: News ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get news by ID
+      tags:
+      - News
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update an existing news article with optional new image/gallery
+        (HR only)
+      parameters:
+      - description: News ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Article title
+        in: formData
+        name: title
+        type: string
+      - description: Article content
+        in: formData
+        name: content
+        type: string
+      - description: Excerpt
+        in: formData
+        name: excerpt
+        type: string
+      - description: Published status
+        in: formData
+        name: published
+        type: boolean
+      - description: New main image
+        in: formData
+        name: image
+        type: file
+      - description: New gallery images
+        in: formData
+        name: gallery
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Update news/culture article
+      tags:
+      - News
+  /jobs:
+    get:
+      description: Get all published job vacancies with optional filters and pagination
+      parameters:
+      - description: Filter by department name
+        in: query
+        name: department
+        type: string
+      - description: Filter by location
+        in: query
+        name: location
+        type: string
+      - description: Filter by employment type
+        enum:
+        - full-time
+        - internship
+        - contract
+        - freelance
+        in: query
+        name: type
+        type: string
+      - description: Filter by priority
+        enum:
+        - low
+        - medium
+        - high
+        - urgent
+        in: query
+        name: priority
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List published jobs
+      tags:
+      - Jobs
+  /jobs/{slug}:
+    get:
+      description: Get a single published job posting by its slug
+      parameters:
+      - description: Job slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get job by slug
+      tags:
+      - Jobs
+  /jobs/{slug}/apply:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Submit a job application with CV file upload (multipart/form-data)
+      parameters:
+      - description: Job slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Full name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Email address
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Phone number
+        in: formData
+        name: phone
+        required: true
+        type: string
+      - description: Terms acceptance
+        in: formData
+        name: terms_accepted
+        required: true
+        type: boolean
+      - description: WhatsApp number (08xx format)
+        in: formData
+        name: whatsapp_number
+        required: true
+        type: string
+      - description: City of domicile
+        in: formData
+        name: domicile_city
+        required: true
+        type: string
+      - description: Province of domicile
+        in: formData
+        name: domicile_province
+        required: true
+        type: string
+      - description: University name
+        in: formData
+        name: university
+        type: string
+      - description: CV file (PDF, max 5MB)
+        in: formData
+        name: cv
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Apply for a job
+      tags:
+      - Applications
+  /me:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently delete the authenticated user's account
+      parameters:
+      - description: Password confirmation
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/wowrack-recruitment_internal_dto.DeleteMyAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Delete my account
+      tags:
+      - Auth
+  /profile:
+    get:
+      description: Get the currently authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Get my profile
+      tags:
+      - Auth
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update the currently authenticated user's profile
+      parameters:
+      - description: Full name
+        in: formData
+        name: name
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        type: string
+      - description: New password
+        in: formData
+        name: password
+        type: string
+      - description: Phone
+        in: formData
+        name: phone
+        type: string
+      - description: LinkedIn URL
+        in: formData
+        name: linkedin
+        type: string
+      - description: Address
+        in: formData
+        name: address
+        type: string
+      - description: Gender
+        enum:
+        - male
+        - female
+        in: formData
+        name: gender
+        type: string
+      - description: Profile photo
+        in: formData
+        name: photo
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Update my profile
+      tags:
+      - Auth
+securityDefinitions:
+  Bearer:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
